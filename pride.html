@@ -1,0 +1,1069 @@
+Вот исправленная и улучшенная версия сайта. Я устранил критическую ошибку, из-за которой не работал личный кабинет после входа, и добавил раздел с отзывами для родителей.
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прайд • Адаптивное дзюдо</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f5f7f0;
+            color: #2c3e4f;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        header {
+            background: white;
+            box-shadow: 0 5px 20px rgba(46,125,50,0.1);
+            position: sticky; top: 0; z-index: 100;
+            border-bottom: 3px solid #2e7d32;
+        }
+        .header-inner {
+            display: flex; justify-content: space-between; align-items: center; padding: 15px 0;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 15px;
+        }
+        .logo h1 {
+            font-size: 32px; font-weight: 800;
+            background: linear-gradient(145deg, #2e7d32, #1b5e20);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo span {
+            font-size: 14px; font-weight: 500; color: #ffb74d;
+            display: block; text-transform: uppercase;
+        }
+
+        nav ul {
+            display: flex; list-style: none; gap: 30px;
+        }
+        nav a {
+            text-decoration: none; color: #2c3e4f; font-weight: 600;
+            cursor: pointer; padding-bottom: 5px; position: relative;
+        }
+        nav a.active { color: #2e7d32; }
+        nav a::after {
+            content: ''; position: absolute; bottom: 0; left: 0;
+            width: 0; height: 2px; background: #2e7d32; transition: width 0.2s;
+        }
+        nav a:hover::after, nav a.active::after { width: 100%; }
+
+        .user-block {
+            display: flex; align-items: center; gap: 20px;
+        }
+        #userInfo {
+            font-weight: 700; color: #2e7d32;
+            background: rgba(46,125,50,0.1); padding: 8px 16px; border-radius: 30px;
+        }
+        .btn {
+            background: linear-gradient(145deg, #2e7d32, #1b5e20);
+            color: white; border: none; padding: 12px 30px; border-radius: 40px;
+            font-weight: 700; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(46,125,50,0.3);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(46,125,50,0.4); }
+        .btn-outline {
+            background: transparent; border: 2px solid #2e7d32; color: #2e7d32; box-shadow: none;
+        }
+        .btn-outline:hover { background: #2e7d32; color: white; }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .hidden { display: none !important; }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; border-radius: 40px; padding: 40px; max-width: 480px; width: 90%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3); border: 2px solid rgba(46,125,50,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h2 { color: #2e7d32; margin-bottom: 25px; font-size: 32px; font-weight: 800; }
+        .modal input, .modal select, .modal textarea {
+            width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #c8e6c9;
+            border-radius: 30px; font-size: 16px;
+        }
+        .role-selector {
+            display: flex; gap: 10px; margin: 20px 0;
+        }
+        .role-btn {
+            flex: 1; padding: 12px; border: 2px solid #c8e6c9; background: none;
+            border-radius: 30px; cursor: pointer; font-weight: 700; transition: 0.2s;
+        }
+        .role-btn.active { background: #2e7d32; color: white; border-color: #2e7d32; }
+
+        .page { display: none; padding: 60px 0; }
+        .page.active { display: block; }
+
+        .section-title {
+            font-size: 42px; font-weight: 800;
+            background: linear-gradient(145deg, #2e7d32, #ffa000);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center; margin-bottom: 20px;
+        }
+
+        .grid-3, .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;
+        }
+        .feature-card, .trainer-card, .contact-card, .review-card {
+            background: white; border-radius: 30px; padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center;
+            transition: 0.3s; border: 2px solid transparent;
+        }
+        .feature-card:hover, .trainer-card:hover, .review-card:hover { transform: translateY(-10px); border-color: #2e7d32; }
+
+        .trainer-photo { font-size: 80px; line-height: 1; margin-bottom: 15px; }
+
+        .schedule-list {
+            background: white; border-radius: 30px; padding: 30px; max-width: 600px; margin: 0 auto;
+        }
+        .schedule-item {
+            display: flex; justify-content: space-between; padding: 15px 0;
+            border-bottom: 1px solid #c8e6c9;
+        }
+
+        .contact-form {
+            max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 30px;
+        }
+        .contact-form input, .contact-form textarea {
+            width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #c8e6c9;
+            border-radius: 30px;
+        }
+        .map-container { margin-top: 30px; border-radius: 30px; overflow: hidden; }
+
+        footer {
+            background: linear-gradient(145deg, #1a2b3c, #2c3e50); color: white;
+            padding: 40px 0; margin-top: 40px; text-align: center;
+        }
+
+        .child-card {
+            background: #f9f9f9;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+            border-left: 4px solid #ffa000;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .child-card.mental-retardation {
+            border-left-color: #d32f2f;
+            background: #ffebee;
+        }
+        .child-card h4 {
+            margin-bottom: 5px;
+        }
+        .edit-diagnosis {
+            font-size: 12px;
+            color: #2e7d32;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 8px;
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 20px;
+            height: 12px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #2e7d32;
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+        }
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .filter-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: #e0e0e0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .filter-btn.active {
+            background: #2e7d32;
+            color: white;
+        }
+        .session-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .delete-btn {
+            background: #dc3545;
+            margin-top: 5px;
+            font-size: 11px;
+            padding: 4px 10px;
+        }
+        .schedule-item-edit {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .review-card {
+            text-align: left;
+        }
+        .review-card p {
+            margin: 10px 0;
+        }
+        .review-author {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .review-date {
+            font-size: 12px;
+            color: #777;
+        }
+        .stars {
+            color: #ffa000;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-inner">
+            <div class="logo">
+                <span style="font-size: 40px;">🥋</span>
+                <div>
+                    <h1>ПРАЙД</h1>
+                    <span>адаптивное дзюдо</span>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a class="nav-link active" data-page="home">Главная</a></li>
+                    <li><a class="nav-link" data-page="about">О клубе</a></li>
+                    <li><a class="nav-link" data-page="trainers">Тренеры</a></li>
+                    <li><a class="nav-link" data-page="schedule">Расписание</a></li>
+                    <li><a class="nav-link" data-page="contacts">Контакты</a></li>
+                </ul>
+            </nav>
+            <div class="user-block">
+                <div id="userInfo"></div>
+                <button class="btn" id="loginBtn">Войти</button>
+                <button class="btn btn-outline hidden" id="logoutBtn">Выйти</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Вход</h2>
+            <div class="role-selector">
+                <button class="role-btn active" data-role="parent">Родитель</button>
+                <button class="role-btn" data-role="trainer">Тренер</button>
+                <button class="role-btn" data-role="admin">Админ</button>
+            </div>
+            <form id="loginForm">
+                <input type="text" id="loginPhone" placeholder="Телефон" required>
+                <input type="password" id="loginPassword" placeholder="Пароль" required>
+                <button type="submit" class="btn" style="width:100%;">Войти</button>
+            </form>
+            <form id="registerForm" class="hidden">
+                <input type="text" id="regName" placeholder="ФИО" required>
+                <input type="tel" id="regPhone" placeholder="Телефон" required>
+                <input type="password" id="regPassword" placeholder="Пароль" required>
+                <select id="regRole">
+                    <option value="parent">Родитель</option>
+                    <option value="trainer">Тренер</option>
+                    <option value="admin">Администратор</option>
+                </select>
+                <button type="submit" class="btn" style="width:100%;">Зарегистрироваться</button>
+            </form>
+            <p style="text-align: center; margin-top: 20px;"><a href="#" id="toggleAuth">Нет аккаунта? Зарегистрироваться</a></p>
+            <p style="text-align: center; margin-top: 10px; color: #888;">Демо: Анна (111/123), Ольга (222/123), тренер (333/123), админ (admin/123)</p>
+        </div>
+    </div>
+
+    <main>
+        <section id="home" class="page active">
+            <div class="container">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+                    <div>
+                        <h2 class="section-title" style="text-align: left;">Клуб Дзюдо "Прайд" для особенных детей</h2>
+                        <p style="font-size: 18px; margin: 20px 0;">Помогаем детям с РАС, синдромом Дауна, ЗПР, умственной отсталостью развиваться через дзюдо. Занятия бесплатные.</p>
+                        <button class="btn btn-primary-enroll">Записаться</button>
+                        <button class="btn btn-outline btn-about">О клубе</button>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 30px; padding: 40px; text-align: center; font-size: 120px;">🥋❤️</div>
+                </div>
+                
+                <!-- Блок отзывов родителей -->
+                <div style="margin-top: 80px;">
+                    <h2 class="section-title">Отзывы родителей</h2>
+                    <div id="reviewsContainer" class="grid-3"></div>
+                </div>
+
+                <div style="margin-top: 80px;">
+                    <h2 class="section-title">Почему мы?</h2>
+                    <div class="features-grid">
+                        <div class="feature-card"><div style="font-size:60px;">👨‍🏫</div><h3>Специалисты</h3><p>Опыт работы с ОВЗ более 10 лет</p></div>
+                        <div class="feature-card"><div style="font-size:60px;">❤️</div><h3>Индивидуально</h3><p>Программа под каждого ребёнка, учитывая диагноз</p></div>
+                        <div class="feature-card"><div style="font-size:60px;">🏆</div><h3>Достижения</h3><p>Призёры турниров по адаптивному дзюдо</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="page">
+            <div class="container">
+                <h2 class="section-title">О клубе «Прайд»</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+                    <div style="font-size: 150px; text-align: center;">🏫🥋</div>
+                    <div>
+                        <p style="font-size: 18px;">Мы открылись в 2015 году и с тех пор помогаем детям с ментальными особенностями социализироваться и укреплять здоровье через дзюдо. Наш метод — сочетание спорта и педагогики.</p>
+                        <p style="margin: 20px 0;">В клубе занимается более 50 детей. Тренировки проводят сертифицированные тренеры и психологи.</p>
+                        <p><strong>Миссия:</strong> сделать спорт доступным для каждого особенного ребёнка, независимо от диагноза.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="trainers" class="page">
+            <div class="container">
+                <h2 class="section-title">Наши тренеры</h2>
+                <div class="grid-3">
+                    <div class="trainer-card"><div class="trainer-photo">👨‍🏫</div><h3>Константин Полей</h3><p style="color:#2e7d32;">Основатель, тренер</p><p>Стаж 15 лет, мастер спорта, специалист по адаптивному дзюдо.</p></div>
+                    <div class="trainer-card"><div class="trainer-photo">👩‍🏫</div><h3>Екатерина Шершнёва</h3><p style="color:#2e7d32;">Тренер</p><p>Стаж 10 лет, опыт работы с детьми с РАС и умственной отсталостью.</p></div>
+                    <div class="trainer-card"><div class="trainer-photo">👨‍⚕️</div><h3>Сергей Короткевич</h3><p style="color:#2e7d32;">Тренер ЛФК</p><p>Стаж 8 лет, специалист по адаптивной физкультуре.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="schedule" class="page">
+            <div class="container">
+                <h2 class="section-title">Расписание занятий</h2>
+                <div id="scheduleListContainer" class="schedule-list"></div>
+            </div>
+        </section>
+
+        <section id="contacts" class="page">
+            <div class="container">
+                <h2 class="section-title">Контакты</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <div class="contact-card">
+                            <p><strong>Адрес:</strong> Гомель, ул. Советская, 1</p>
+                            <p><strong>Телефон:</strong> +375 (29) 639-39-79</p>
+                            <p><strong>Email:</strong> info@pride.by</p>
+                            <p><strong>Мы в соцсетях:</strong> @pridejudo</p>
+                        </div>
+                        <div class="contact-form">
+                            <h3>Напишите нам</h3>
+                            <input type="text" placeholder="Ваше имя" id="feedbackName">
+                            <input type="email" placeholder="Email" id="feedbackEmail">
+                            <textarea rows="4" placeholder="Сообщение" id="feedbackMsg"></textarea>
+                            <button class="btn" style="width:100%;" id="sendFeedbackBtn">Отправить</button>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <iframe width="100%" height="400" src="https://www.openstreetmap.org/export/embed.html?bbox=30.989%2C52.423%2C31.012%2C52.435&layer=mapnik&marker=52.429%2C31.000" style="border:0;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" id="cabinetSection" style="display: none;">
+            <h2 class="section-title">Личный кабинет</h2>
+            <div id="cabinetContent"></div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>© 2025 Клуб адаптивного дзюдо «Прайд»</p></div></footer>
+
+    <script>
+        // ==================== ДАННЫЕ ====================
+        let appData = {
+            users: [
+                { id: 'p1', name: 'Анна Петрова', phone: '111', password: '123', role: 'parent', childrenIds: ['c1', 'c2'] },
+                { id: 'p2', name: 'Ольга Смирнова', phone: '222', password: '123', role: 'parent', childrenIds: ['c3'] },
+                { id: 't1', name: 'Константин Полей', phone: '333', password: '123', role: 'trainer', childrenIds: [] },
+                { id: 'a1', name: 'Администратор', phone: 'admin', password: '123', role: 'admin', childrenIds: [] }
+            ],
+            children: {
+                'c1': { id: 'c1', name: 'Иван', age: 7, diagnosis: 'РАС (расстройство аутистического спектра)', visits: 12, progress: { totalPoints: 18, maxPossible: 30 }, sessions: [ { date: '2025-03-01', score: 2, comment: 'Хорошо работал' }, { date: '2025-03-04', score: 1, comment: 'Справился, но отвлекался' } ] },
+                'c2': { id: 'c2', name: 'Мария', age: 5, diagnosis: 'ЗПР (задержка психического развития)', visits: 8, progress: { totalPoints: 10, maxPossible: 20 }, sessions: [ { date: '2025-03-02', score: 1, comment: 'Упражнения давались тяжело' }, { date: '2025-03-05', score: 2, comment: 'Отличный прогресс!' } ] },
+                'c3': { id: 'c3', name: 'Алексей', age: 9, diagnosis: 'Умственная отсталость', visits: 5, progress: { totalPoints: 6, maxPossible: 15 }, sessions: [ { date: '2025-03-03', score: 1, comment: 'С поддержкой тренера' }, { date: '2025-03-06', score: 1, comment: 'Старался' } ] }
+            },
+            schedule: [
+                { id: 's1', groupName: 'Адаптивная группа (3-6 лет)', days: 'Пн/Ср', time: '17:00' },
+                { id: 's2', groupName: 'Адаптивная группа (7-12 лет)', days: 'Вт/Чт', time: '18:00' },
+                { id: 's3', groupName: 'Индивидуальные тренировки', days: 'по записи', time: '' },
+                { id: 's4', groupName: 'ЛФК и растяжка', days: 'Сб', time: '10:00' }
+            ],
+            reviews: [
+                { id: 'r1', parentName: 'Елена', text: 'Сын занимается уже год. Результаты потрясающие: стал увереннее, улучшилась координация. Огромное спасибо тренерам за чуткость и профессионализм!', rating: 5, date: '2025-02-10' },
+                { id: 'r2', parentName: 'Дмитрий', text: 'Дочка с РАС очень полюбила занятия. Тренер находит индивидуальный подход. Рекомендую клуб "Прайд" всем особенным детям!', rating: 5, date: '2025-01-25' },
+                { id: 'r3', parentName: 'Марина', text: 'Замечательная атмосфера, ребёнок ждёт каждую тренировку. Прогресс виден не только физический, но и эмоциональный.', rating: 4, date: '2025-02-18' }
+            ]
+        };
+
+        function loadData() {
+            const stored = localStorage.getItem('prideAppData');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.users && parsed.children && parsed.schedule && parsed.reviews) appData = parsed;
+                } catch(e) {}
+            }
+            saveData();
+        }
+        function saveData() { localStorage.setItem('prideAppData', JSON.stringify(appData)); }
+
+        let currentUser = null;
+        let currentDiagnosisFilter = 'all';
+
+        function getUserChildren() {
+            if (!currentUser) return [];
+            if (currentUser.role === 'parent') {
+                return currentUser.childrenIds.map(id => appData.children[id]).filter(c => c);
+            }
+            return Object.values(appData.children);
+        }
+
+        function addSession(childId, score, comment) {
+            const child = appData.children[childId];
+            if (!child) return;
+            const date = new Date().toISOString().slice(0,10);
+            child.sessions.unshift({ date, score, comment });
+            child.visits++;
+            child.progress.totalPoints += score;
+            child.progress.maxPossible += 2;
+            saveData();
+            updateCabinet();
+            renderSchedulePage();
+        }
+
+        function addChild(parentId, name, age, diagnosis) {
+            const newId = 'c' + Date.now() + '_' + Math.random().toString(36);
+            appData.children[newId] = {
+                id: newId, name, age, diagnosis, visits: 0,
+                progress: { totalPoints: 0, maxPossible: 0 },
+                sessions: []
+            };
+            const parent = appData.users.find(u => u.id === parentId);
+            if (parent && parent.role === 'parent') {
+                parent.childrenIds.push(newId);
+            }
+            saveData();
+            updateCabinet();
+        }
+
+        function deleteChild(childId) {
+            for (let user of appData.users) {
+                if (user.childrenIds) user.childrenIds = user.childrenIds.filter(id => id !== childId);
+            }
+            delete appData.children[childId];
+            saveData();
+            updateCabinet();
+        }
+
+        function editDiagnosis(childId) {
+            const child = appData.children[childId];
+            if (!child) return;
+            const newDiagnosis = prompt('Введите новый диагноз:', child.diagnosis);
+            if (newDiagnosis && newDiagnosis.trim()) {
+                child.diagnosis = newDiagnosis.trim();
+                saveData();
+                updateCabinet();
+            }
+        }
+
+        function addScheduleItem(groupName, days, time) {
+            const newId = 's' + Date.now();
+            appData.schedule.push({ id: newId, groupName, days, time });
+            saveData();
+            renderSchedulePage();
+            updateCabinet();
+        }
+        function updateScheduleItem(id, groupName, days, time) {
+            const item = appData.schedule.find(s => s.id === id);
+            if (item) {
+                item.groupName = groupName;
+                item.days = days;
+                item.time = time;
+                saveData();
+                renderSchedulePage();
+                updateCabinet();
+            }
+        }
+        function deleteScheduleItem(id) {
+            appData.schedule = appData.schedule.filter(s => s.id !== id);
+            saveData();
+            renderSchedulePage();
+            updateCabinet();
+        }
+
+        function renderSchedulePage() {
+            const container = document.getElementById('scheduleListContainer');
+            if (!container) return;
+            container.innerHTML = appData.schedule.map(item => `
+                <div class="schedule-item">
+                    <span>🥋 ${escapeHtml(item.groupName)}</span>
+                    <span>${escapeHtml(item.days)} ${escapeHtml(item.time)}</span>
+                </div>
+            `).join('');
+        }
+
+        function showScheduleEditor() {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <h2>Управление расписанием</h2>
+                    <div id="scheduleEditorList"></div>
+                    <hr>
+                    <h3>Добавить занятие</h3>
+                    <input type="text" id="newGroupName" placeholder="Название группы" required>
+                    <input type="text" id="newDays" placeholder="Дни (например, Пн/Ср)" required>
+                    <input type="text" id="newTime" placeholder="Время (например, 17:00)">
+                    <button class="btn" id="addScheduleBtn">Добавить</button>
+                    <button class="btn btn-outline" id="closeScheduleEditor">Закрыть</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+
+            function renderEditorList() {
+                const listContainer = modalDiv.querySelector('#scheduleEditorList');
+                listContainer.innerHTML = appData.schedule.map(item => `
+                    <div class="schedule-item-edit" data-id="${item.id}">
+                        <input type="text" value="${escapeHtml(item.groupName)}" class="edit-group" style="flex:2;">
+                        <input type="text" value="${escapeHtml(item.days)}" class="edit-days" style="flex:1;">
+                        <input type="text" value="${escapeHtml(item.time)}" class="edit-time" style="flex:1;">
+                        <button class="btn-small save-edit">💾</button>
+                        <button class="btn-small delete-item">❌</button>
+                    </div>
+                `).join('');
+                modalDiv.querySelectorAll('.save-edit').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const div = btn.closest('.schedule-item-edit');
+                        const id = div.dataset.id;
+                        const groupName = div.querySelector('.edit-group').value;
+                        const days = div.querySelector('.edit-days').value;
+                        const time = div.querySelector('.edit-time').value;
+                        updateScheduleItem(id, groupName, days, time);
+                        renderEditorList();
+                    });
+                });
+                modalDiv.querySelectorAll('.delete-item').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.closest('.schedule-item-edit').dataset.id;
+                        if (confirm('Удалить занятие?')) {
+                            deleteScheduleItem(id);
+                            renderEditorList();
+                        }
+                    });
+                });
+            }
+            renderEditorList();
+            modalDiv.querySelector('#addScheduleBtn').addEventListener('click', () => {
+                const groupName = modalDiv.querySelector('#newGroupName').value.trim();
+                const days = modalDiv.querySelector('#newDays').value.trim();
+                const time = modalDiv.querySelector('#newTime').value.trim();
+                if (!groupName || !days) {
+                    alert('Заполните название и дни');
+                    return;
+                }
+                addScheduleItem(groupName, days, time);
+                renderEditorList();
+                modalDiv.querySelector('#newGroupName').value = '';
+                modalDiv.querySelector('#newDays').value = '';
+                modalDiv.querySelector('#newTime').value = '';
+            });
+            modalDiv.querySelector('#closeScheduleEditor').addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        function addReview(parentName, text, rating) {
+            const newReview = {
+                id: 'r' + Date.now(),
+                parentName: parentName,
+                text: text,
+                rating: rating,
+                date: new Date().toISOString().slice(0,10)
+            };
+            appData.reviews.unshift(newReview);
+            saveData();
+            renderReviews();
+        }
+
+        function renderReviews() {
+            const container = document.getElementById('reviewsContainer');
+            if (!container) return;
+            container.innerHTML = appData.reviews.slice(0, 6).map(review => `
+                <div class="review-card">
+                    <div class="review-author">${escapeHtml(review.parentName)}</div>
+                    <div class="stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+                    <p>"${escapeHtml(review.text)}"</p>
+                    <div class="review-date">${review.date}</div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function renderChildProgress(child, canMark = false) {
+            const percent = child.progress.maxPossible ? (child.progress.totalPoints / child.progress.maxPossible * 100).toFixed(0) : 0;
+            const isMental = child.diagnosis.includes('Умственная отсталость');
+            const extraClass = isMental ? 'mental-retardation' : '';
+            return `
+                <div class="child-card ${extraClass}" data-child-id="${child.id}">
+                    <h4>${escapeHtml(child.name)}, ${child.age} лет</h4>
+                    <p><strong>Диагноз:</strong> ${escapeHtml(child.diagnosis)} 
+                        ${(currentUser.role === 'parent' || currentUser.role === 'admin') ? `<span class="edit-diagnosis" data-child-id="${child.id}">✏️</span>` : ''}
+                    </p>
+                    <p>Посещений: ${child.visits}</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percent}%;"></div>
+                    </div>
+                    <div class="stats-row">
+                        <span>Общий прогресс:</span>
+                        <span>${child.progress.totalPoints} / ${child.progress.maxPossible} (${percent}%)</span>
+                    </div>
+                    <div class="session-list">
+                        <strong>Последние занятия:</strong>
+                        ${child.sessions.slice(0,3).map(s => `
+                            <div class="stats-row">
+                                <span>${s.date}</span>
+                                <span>Оценка: ${'★'.repeat(s.score)}${'☆'.repeat(2-s.score)}</span>
+                                <span>${escapeHtml(s.comment)}</span>
+                            </div>
+                        `).join('')}
+                        ${child.sessions.length === 0 ? '<div>Нет данных</div>' : ''}
+                    </div>
+                    ${canMark ? `
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-small mark-session-btn" data-child-id="${child.id}">Отметить занятие</button>
+                        </div>
+                    ` : ''}
+                    ${currentUser.role === 'admin' ? `
+                        <div style="margin-top: 5px;">
+                            <button class="btn btn-small delete-btn" data-child-id="${child.id}">Удалить</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function showChildDetails(childId) {
+            const child = appData.children[childId];
+            if (!child) return;
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <h2>Детальная статистика: ${escapeHtml(child.name)}</h2>
+                    <canvas id="progressChart" width="300" height="200"></canvas>
+                    <h3>Все занятия</h3>
+                    <div class="session-list">
+                        ${child.sessions.map(s => `
+                            <div class="stats-row">
+                                <span>${s.date}</span>
+                                <span>Оценка: ${'★'.repeat(s.score)}${'☆'.repeat(2-s.score)}</span>
+                                <span>${escapeHtml(s.comment)}</span>
+                            </div>
+                        `).join('')}
+                        ${child.sessions.length === 0 ? '<div>Нет данных</div>' : ''}
+                    </div>
+                    <button class="btn" id="closeModal">Закрыть</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            const ctx = modalDiv.querySelector('#progressChart').getContext('2d');
+            const scores = child.sessions.map(s => s.score).reverse();
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: child.sessions.map(s => s.date).reverse(),
+                    datasets: [{
+                        label: 'Успех (0-2)',
+                        data: scores,
+                        borderColor: '#2e7d32',
+                        tension: 0.2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: { y: { min: 0, max: 2, ticks: { stepSize: 1 } } }
+                }
+            });
+            modalDiv.querySelector('#closeModal').addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        function showMarkSessionModal(childId) {
+            const child = appData.children[childId];
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `
+                <div class="modal-content">
+                    <h2>Оценка занятия: ${escapeHtml(child.name)}</h2>
+                    <p>Диагноз: ${escapeHtml(child.diagnosis)}</p>
+                    <div>
+                        <label>Оценка (0-2):</label>
+                        <select id="sessionScore">
+                            <option value="0">0 - неудовлетворительно</option>
+                            <option value="1">1 - удовлетворительно</option>
+                            <option value="2" selected>2 - отлично</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Комментарий:</label>
+                        <textarea id="sessionComment" rows="3" placeholder="Отметьте успехи/сложности..."></textarea>
+                    </div>
+                    <button class="btn" id="saveSession">Сохранить</button>
+                    <button class="btn btn-outline" id="cancelSession">Отмена</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            modalDiv.querySelector('#saveSession').addEventListener('click', () => {
+                const score = parseInt(modalDiv.querySelector('#sessionScore').value);
+                const comment = modalDiv.querySelector('#sessionComment').value.trim() || 'Без комментария';
+                addSession(childId, score, comment);
+                modalDiv.remove();
+            });
+            modalDiv.querySelector('#cancelSession').addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        function showAddChildModal() {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `
+                <div class="modal-content">
+                    <h2>Добавить ребёнка</h2>
+                    <input type="text" id="newChildName" placeholder="Имя ребенка" required>
+                    <input type="number" id="newChildAge" placeholder="Возраст" required>
+                    <select id="newChildDiagnosis">
+                        <option value="РАС (расстройство аутистического спектра)">РАС (расстройство аутистического спектра)</option>
+                        <option value="Синдром Дауна">Синдром Дауна</option>
+                        <option value="ЗПР (задержка психического развития)">ЗПР (задержка психического развития)</option>
+                        <option value="Умственная отсталость">Умственная отсталость</option>
+                        <option value="Другое">Другое</option>
+                    </select>
+                    <input type="text" id="newChildDiagnosisOther" placeholder="Если 'Другое', укажите диагноз" style="display:none;">
+                    <button class="btn" id="confirmAddChild">Добавить</button>
+                    <button class="btn btn-outline" id="cancelAddChild">Отмена</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            const select = modalDiv.querySelector('#newChildDiagnosis');
+            const otherInput = modalDiv.querySelector('#newChildDiagnosisOther');
+            select.addEventListener('change', () => {
+                otherInput.style.display = select.value === 'Другое' ? 'block' : 'none';
+            });
+            modalDiv.querySelector('#confirmAddChild').addEventListener('click', () => {
+                const name = modalDiv.querySelector('#newChildName').value.trim();
+                const age = parseInt(modalDiv.querySelector('#newChildAge').value);
+                let diagnosis = select.value;
+                if (diagnosis === 'Другое') {
+                    diagnosis = otherInput.value.trim();
+                    if (!diagnosis) { alert('Укажите диагноз'); return; }
+                }
+                if (!name || isNaN(age)) { alert('Заполните все поля'); return; }
+                addChild(currentUser.id, name, age, diagnosis);
+                modalDiv.remove();
+            });
+            modalDiv.querySelector('#cancelAddChild').addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        function showAddReviewModal() {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `
+                <div class="modal-content">
+                    <h2>Оставить отзыв</h2>
+                    <input type="text" id="reviewParentName" placeholder="Ваше имя" value="${escapeHtml(currentUser.name)}" readonly>
+                    <select id="reviewRating">
+                        <option value="5">★★★★★ (5)</option>
+                        <option value="4">★★★★☆ (4)</option>
+                        <option value="3">★★★☆☆ (3)</option>
+                        <option value="2">★★☆☆☆ (2)</option>
+                        <option value="1">★☆☆☆☆ (1)</option>
+                    </select>
+                    <textarea id="reviewText" rows="4" placeholder="Поделитесь впечатлениями о клубе..." required></textarea>
+                    <button class="btn" id="submitReviewBtn">Опубликовать</button>
+                    <button class="btn btn-outline" id="cancelReviewBtn">Отмена</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            modalDiv.querySelector('#submitReviewBtn').addEventListener('click', () => {
+                const text = modalDiv.querySelector('#reviewText').value.trim();
+                const rating = parseInt(modalDiv.querySelector('#reviewRating').value);
+                if (!text) { alert('Напишите текст отзыва'); return; }
+                addReview(currentUser.name, text, rating);
+                modalDiv.remove();
+                alert('Спасибо за отзыв!');
+            });
+            modalDiv.querySelector('#cancelReviewBtn').addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        function updateCabinet() {
+            if (!currentUser) return;
+            const cabinetContentDiv = document.getElementById('cabinetContent');
+            if (!cabinetContentDiv) return;
+            const children = getUserChildren();
+            let cabinetHtml = '';
+            if (currentUser.role === 'parent') {
+                cabinetHtml = `
+                    <div class="feature-card">
+                        <h3>Мои дети</h3>
+                        <div id="childrenList">
+                            ${children.map(c => renderChildProgress(c, false)).join('')}
+                        </div>
+                        <button class="btn" id="addChildBtn">➕ Добавить ребёнка</button>
+                        <button class="btn btn-outline" id="addReviewBtnParent">✍️ Оставить отзыв</button>
+                    </div>
+                `;
+                cabinetContentDiv.innerHTML = cabinetHtml;
+                document.getElementById('addChildBtn')?.addEventListener('click', showAddChildModal);
+                document.getElementById('addReviewBtnParent')?.addEventListener('click', showAddReviewModal);
+                attachCommonEvents();
+            }
+            else if (currentUser.role === 'trainer') {
+                const filtered = currentDiagnosisFilter === 'all' ? children : children.filter(c => c.diagnosis === currentDiagnosisFilter);
+                const mentalCount = children.filter(c => c.diagnosis.includes('Умственная отсталость')).length;
+                cabinetHtml = `
+                    <div class="feature-card">
+                        <h3>Мои группы</h3>
+                        <p>🥋 Группа "Новички" (5 детей) - сегодня в 17:00</p>
+                        <p>🥋 Группа "Адаптивная" (3 детей) - завтра в 10:00</p>
+                        <div class="filter-group">
+                            <button class="filter-btn ${currentDiagnosisFilter === 'all' ? 'active' : ''}" data-filter="all">Все дети</button>
+                            <button class="filter-btn ${currentDiagnosisFilter === 'Умственная отсталость' ? 'active' : ''}" data-filter="Умственная отсталость">⚠️ Умственная отсталость (${mentalCount})</button>
+                        </div>
+                        <div id="childrenListTrainer">
+                            ${filtered.map(c => renderChildProgress(c, true)).join('')}
+                        </div>
+                        <button class="btn" id="manageScheduleBtn">📅 Управление расписанием</button>
+                    </div>
+                `;
+                cabinetContentDiv.innerHTML = cabinetHtml;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        currentDiagnosisFilter = btn.dataset.filter;
+                        updateCabinet();
+                    });
+                });
+                document.getElementById('manageScheduleBtn')?.addEventListener('click', showScheduleEditor);
+                attachCommonEvents();
+                attachMarkEvents();
+            }
+            else if (currentUser.role === 'admin') {
+                const totalPoints = children.reduce((sum, c) => sum + c.progress.totalPoints, 0);
+                const maxPossible = children.reduce((sum, c) => sum + c.progress.maxPossible, 1);
+                const overallPercent = ((totalPoints / maxPossible) * 100).toFixed(1);
+                cabinetHtml = `
+                    <div class="feature-card">
+                        <h3>Панель администратора</h3>
+                        <p>👥 Всего детей: ${children.length}</p>
+                        <p>📊 Активных групп: 6</p>
+                        <p>👨‍🏫 Тренеров: 8</p>
+                        <p>⚠️ Детей с умственной отсталостью: ${children.filter(c => c.diagnosis.includes('Умственная отсталость')).length}</p>
+                        <p>📈 Общий прогресс клуба: ${overallPercent}% (${totalPoints}/${maxPossible})</p>
+                        <button class="btn" id="adminAddChild">Добавить ребёнка</button>
+                        <button class="btn" id="manageScheduleBtnAdmin">📅 Управление расписанием</button>
+                        <button class="btn btn-outline" id="adminAddReview">✍️ Добавить отзыв</button>
+                    </div>
+                    <div id="childrenListAdmin">
+                        ${children.map(c => renderChildProgress(c, true)).join('')}
+                    </div>
+                `;
+                cabinetContentDiv.innerHTML = cabinetHtml;
+                document.getElementById('adminAddChild')?.addEventListener('click', showAddChildModal);
+                document.getElementById('manageScheduleBtnAdmin')?.addEventListener('click', showScheduleEditor);
+                document.getElementById('adminAddReview')?.addEventListener('click', showAddReviewModal);
+                attachCommonEvents();
+                attachMarkEvents();
+                attachDeleteEvents();
+            }
+        }
+
+        function attachCommonEvents() {
+            document.querySelectorAll('.edit-diagnosis').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editDiagnosis(el.dataset.childId);
+                });
+            });
+            document.querySelectorAll('.child-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('edit-diagnosis') && !e.target.classList.contains('btn-small') && !e.target.classList.contains('delete-btn')) {
+                        showChildDetails(card.dataset.childId);
+                    }
+                });
+            });
+        }
+        function attachMarkEvents() {
+            document.querySelectorAll('.mark-session-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showMarkSessionModal(btn.dataset.childId);
+                });
+            });
+        }
+        function attachDeleteEvents() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Удалить ребёнка?')) deleteChild(btn.dataset.childId);
+                });
+            });
+        }
+
+        function updateUI() {
+            if (currentUser) {
+                document.getElementById('userInfo').textContent = `Привет, ${currentUser.name}`;
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('cabinetSection').style.display = 'block';
+                updateCabinet();
+            } else {
+                document.getElementById('userInfo').textContent = '';
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
+                document.getElementById('cabinetSection').style.display = 'none';
+            }
+        }
+
+        function login(phone, password) {
+            const user = appData.users.find(u => u.phone === phone && u.password === password);
+            if (user) {
+                currentUser = user;
+                updateUI();
+                return true;
+            }
+            return false;
+        }
+        function register(name, phone, password, role) {
+            if (appData.users.find(u => u.phone === phone)) return false;
+            let newId = (role === 'parent' ? 'p' : role === 'trainer' ? 't' : 'a') + Date.now();
+            const newUser = { id: newId, name, phone, password, role, childrenIds: [] };
+            appData.users.push(newUser);
+            saveData();
+            currentUser = newUser;
+            updateUI();
+            return true;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            if (login(phone, password)) {
+                document.getElementById('authModal').classList.remove('active');
+            } else alert('Неверный телефон или пароль');
+        });
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            if (register(name, phone, password, role)) {
+                document.getElementById('authModal').classList.remove('active');
+            } else alert('Пользователь с таким телефоном уже существует');
+        });
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            currentUser = null;
+            updateUI();
+        });
+        document.getElementById('loginBtn').addEventListener('click', () => document.getElementById('authModal').classList.add('active'));
+        document.getElementById('authModal').addEventListener('click', (e) => { if (e.target === document.getElementById('authModal')) document.getElementById('authModal').classList.remove('active'); });
+
+        let isLogin = true;
+        document.getElementById('toggleAuth').addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            const title = document.getElementById('modalTitle');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            if (isLogin) {
+                title.textContent = 'Вход';
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                e.target.textContent = 'Нет аккаунта? Зарегистрироваться';
+            } else {
+                title.textContent = 'Регистрация';
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                e.target.textContent = 'Уже есть аккаунт? Войти';
+            }
+        });
+
+        document.querySelectorAll('.btn-primary-enroll').forEach(btn => {
+            btn.addEventListener('click', () => alert('Спасибо за интерес! Наш администратор свяжется с вами.'));
+        });
+        document.querySelectorAll('.btn-about').forEach(btn => {
+            btn.addEventListener('click', () => setActivePage('about'));
+        });
+        document.getElementById('sendFeedbackBtn')?.addEventListener('click', () => {
+            alert('Сообщение отправлено! Мы ответим в ближайшее время.');
+        });
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        function setActivePage(pageId) {
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            navLinks.forEach(l => {
+                l.classList.remove('active');
+                if (l.dataset.page === pageId) l.classList.add('active');
+            });
+            if (pageId === 'schedule') renderSchedulePage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        navLinks.forEach(l => l.addEventListener('click', (e) => {
+            e.preventDefault();
+            setActivePage(l.dataset.page);
+        }));
+
+        loadData();
+        renderSchedulePage();
+        renderReviews();
+    </script>
+</body>
+</html>
+```
